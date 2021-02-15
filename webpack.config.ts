@@ -68,6 +68,8 @@ function renameNodeModules(resourcePath: string) {
 		path
 			.relative(__dirname, resourcePath)
 			.replace('node_modules', 'modules')
+			// use the same name on all architectures so electron-builder can build a universal dmg on mac
+			.replace(LZMA_BINDINGS_FOLDER, 'binding')
 			// file-loader expects posix paths, even on Windows
 			.replace(/\\/g, '/')
 	);
@@ -189,13 +191,22 @@ const commonConfig = {
 				/node_modules\/lzma-native\/index\.js$/,
 				// remove node-pre-gyp magic from lzma-native
 				{
-					search: 'require(binding_path)',
-					replace: () => {
-						return `require('./${path.posix.join(
-							LZMA_BINDINGS_FOLDER,
-							'lzma_native.node',
-						)}')`;
-					},
+					search: 'var native = require(binding_path);',
+					// electron-builder doesn't like universal dmgs having different native modules files.
+					// lzma-native bindings folder has the architecture name in it.
+					// The following is made to make electron-builder and webpack happy:
+					// The first require (in the try clause) will fail during webpack but will work once the app is built.
+					// Webpack will warn about this during the build, ignore it.
+					// The second require (in the catch clause) will make webpack find the lzma_native.node file in the node_modules folder,
+					// it will be renamed during the packing.
+					replace: outdent`
+						var native;
+						try {
+							native = require('./binding/lzma_native.node');
+						} catch (error) {
+							native = require('./${LZMA_BINDINGS_FOLDER}/lzma_native.node');
+						}
+					`,
 				},
 				// use regular stream module instead of readable-stream
 				{
