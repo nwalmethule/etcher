@@ -189,13 +189,19 @@ const commonConfig = {
 				/node_modules\/lzma-native\/index\.js$/,
 				// remove node-pre-gyp magic from lzma-native
 				{
-					search: 'require(binding_path)',
-					replace: () => {
-						return `require('./${path.posix.join(
-							LZMA_BINDINGS_FOLDER,
-							'lzma_native.node',
-						)}')`;
-					},
+					search: 'var native = require(binding_path);',
+					// electron-builder doesn't like universal dmgs having different native modules files.
+					// lzma-native bindings folder has the architecture name in it.
+					// The following is made to make electron-builder and webpack happy:
+					// The require will fail during webpack but will work once the app is built.
+					// Webpack will warn about this during the build, ignore it.
+					replace: outdent`
+						var native;
+						try {
+							native = require('./binding/lzma_native.node');
+						} catch (error) {
+						}
+					`,
 				},
 				// use regular stream module instead of readable-stream
 				{
@@ -313,13 +319,12 @@ const guiConfigCopyPatterns = [
 	},
 ];
 
-if (os.platform() === 'win32') {
-	// liblzma.dll is required on Windows for lzma-native
-	guiConfigCopyPatterns.push({
-		from: `node_modules/lzma-native/${LZMA_BINDINGS_FOLDER}/liblzma.dll`,
-		to: `modules/lzma-native/${LZMA_BINDINGS_FOLDER}/liblzma.dll`,
-	});
-}
+// Copy the lzma_native.node module as it won't be resolved because we rename it.
+// Also, liblzma.dll in that folder is required on Windows.
+guiConfigCopyPatterns.push({
+	from: `node_modules/lzma-native/${LZMA_BINDINGS_FOLDER}`,
+	to: `modules/lzma-native/binding`,
+});
 
 const guiConfig = {
 	...commonConfig,
