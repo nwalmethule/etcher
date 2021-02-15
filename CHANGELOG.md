@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+# v1.5.117
+## (2021-02-15)
+
+* Fix beforeBuild.js script to also work on mac [Alexis Svinartchouk]
+* Support building universal dmgs (x64 and arm64) for mac [Alexis Svinartchouk]
+* Update electron-builder to 22.10.4 [Alexis Svinartchouk]
+* Fix titlebar z-index [Alexis Svinartchouk]
+* Explicitely set contextIsolation to false [Alexis Svinartchouk]
+* Update electron from 9.4.1 to 11.2.3 [Alexis Svinartchouk]
+* Update etcher-sdk from 6.1.0 to 6.1.1 [Alexis Svinartchouk]
+
 # v1.5.116
 ## (2021-02-03)
 
